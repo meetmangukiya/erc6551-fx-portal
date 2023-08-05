@@ -4,3 +4,6 @@
 [submodule "lib/fx-portal"]
 	path = lib/fx-portal
 	url = https://github.com/0xPolygon/fx-portal
+[submodule "lib/solmate"]
+	path = lib/solmate
+	url = https://github.com/transmissions11/solmate

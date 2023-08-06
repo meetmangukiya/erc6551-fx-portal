@@ -2,5 +2,12 @@
 src = "src"
 out = "out"
 libs = ["lib"]
+evm_version = 'shanghai'
+solc_version = '0.8.20'
+remappings = ["solady/=lib/solady/src/"]
+
+[rpc_endpoints]
+mainnet = "https://eth.llamarpc.com"
+polygon = "https://polygon.llamarpc.com"
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

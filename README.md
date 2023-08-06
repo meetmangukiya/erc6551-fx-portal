@@ -8,4 +8,4 @@ is controlled by the FxTunnel. Users can call `executeRemoteCall` on tunnels
 that authenticates the user before sending the message for executing the call
 on remote chain account.
 
-![Execution flow chart](./execute-flow.png)
+![Execution flow chart](./execution-flow.png)

@@ -11,6 +11,7 @@ import { BeaconProxy } from "openzeppelin-contracts/contracts/proxy/beacon/Beaco
 import { UpgradeableBeacon } from "openzeppelin-contracts/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { BaseScript } from "./BaseScript.sol";
 import { DeployAccountImplScript } from "./DeployAccountImpl.s.sol";
+import { console } from "forge-std/console.sol";
 
 ERC1967Factory constant FACTORY = ERC1967Factory(ERC1967FactoryConstants.ADDRESS);
 
@@ -128,6 +129,17 @@ contract DeployScript is Test, BaseScript {
         );
 
         _syncContracts();
+
+        console.log("accountBeaconProxyMainnet", addresses.accountBeaconProxyMainnet);
+        console.log("accountBeaconProxyL2", addresses.accountBeaconProxyL2);
+        console.log("accountProxyMainnet", addresses.accountProxyMainnet);
+        console.log("accountProxyL2", addresses.accountProxyL2);
+        console.log("rootTunnelProxy", addresses.rootTunnelProxy);
+        console.log("childTunnelProxy", addresses.childTunnelProxy);
+        console.log("accountImplMainnet", addresses.accountImplMainnet);
+        console.log("accountImplL2", addresses.accountImplL2);
+        console.log("rootTunnelImpl", addresses.rootTunnelImpl);
+        console.log("childTunnelImpl", addresses.childTunnelImpl);
     }
 
     function _syncContracts() internal {

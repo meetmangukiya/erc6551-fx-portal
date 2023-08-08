@@ -1,10 +1,11 @@
 pragma solidity ^0.8.20;
+
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 import { Test } from "forge-std/Test.sol";
 import { ERC1967Factory } from "solady/utils/ERC1967Factory.sol";
 import { ERC1967FactoryConstants } from "solady/utils/ERC1967FactoryConstants.sol";
-import { ERC6551FxChildTunnel } from "src/tunnel/ERC6551FxChildTunnel.sol";
-import { ERC6551FxRootTunnel } from "src/tunnel/ERC6551FxRootTunnel.sol";
+import { RemoteCallFxChildTunnel } from "src/tunnel/RemoteCallFxChildTunnel.sol";
+import { RemoteCallFxRootTunnel } from "src/tunnel/RemoteCallFxRootTunnel.sol";
 import { ERC6551Account } from "src/ERC6551Account.sol";
 import { FX_ROOT_MAINNET, FX_CHILD_POLYGON_POS, CHECKPOINT_MANAGER } from "src/constants.sol";
 import { BeaconProxy } from "openzeppelin-contracts/contracts/proxy/beacon/BeaconProxy.sol";
@@ -37,12 +38,12 @@ contract DeployScript is Test, BaseScript {
         ERC6551Account accountBeaconProxyL2;
         ERC6551Account accountMainnetProxy;
         ERC6551Account accountL2Proxy;
-        ERC6551FxRootTunnel rootTunnelProxy;
-        ERC6551FxChildTunnel childTunnelProxy;
+        RemoteCallFxRootTunnel rootTunnelProxy;
+        RemoteCallFxChildTunnel childTunnelProxy;
         ERC6551Account accountMainnetImpl;
         ERC6551Account accountL2Impl;
-        ERC6551FxRootTunnel rootTunnelImpl;
-        ERC6551FxChildTunnel childTunnelImpl;
+        RemoteCallFxRootTunnel rootTunnelImpl;
+        RemoteCallFxChildTunnel childTunnelImpl;
     }
 
     Addresses addresses;
@@ -80,7 +81,7 @@ contract DeployScript is Test, BaseScript {
         vm.selectFork(mainnetForkId);
         // deploy root tunnel
         _broadcast();
-        ERC6551FxRootTunnel rootTunnelImpl = new ERC6551FxRootTunnel(address(0), address(0));
+        RemoteCallFxRootTunnel rootTunnelImpl = new RemoteCallFxRootTunnel(address(0), address(0));
         addresses.rootTunnelImpl = address(rootTunnelImpl);
         vm.label(addresses.rootTunnelImpl, "ROOT_TUNNEL_IMPL");
 
@@ -100,7 +101,7 @@ contract DeployScript is Test, BaseScript {
         vm.selectFork(l2ForkId);
         // deploy child tunnel
         _broadcast();
-        ERC6551FxChildTunnel childTunnelImpl = new ERC6551FxChildTunnel(address(0));
+        RemoteCallFxChildTunnel childTunnelImpl = new RemoteCallFxChildTunnel(address(0));
         addresses.childTunnelImpl = address(childTunnelImpl);
         vm.label(addresses.childTunnelImpl, "CHILD_TUNNEL_IMPL");
 
@@ -147,12 +148,12 @@ contract DeployScript is Test, BaseScript {
         contracts.accountBeaconProxyL2 = ERC6551Account(payable(addresses.accountBeaconProxyL2));
         contracts.accountMainnetProxy = ERC6551Account(payable(addresses.accountProxyMainnet));
         contracts.accountL2Proxy = ERC6551Account(payable(addresses.accountProxyL2));
-        contracts.rootTunnelProxy = ERC6551FxRootTunnel(addresses.rootTunnelProxy);
-        contracts.childTunnelProxy = ERC6551FxChildTunnel(addresses.childTunnelProxy);
+        contracts.rootTunnelProxy = RemoteCallFxRootTunnel(addresses.rootTunnelProxy);
+        contracts.childTunnelProxy = RemoteCallFxChildTunnel(addresses.childTunnelProxy);
 
         contracts.accountMainnetImpl = ERC6551Account(payable(addresses.accountImplMainnet));
         contracts.accountL2Impl = ERC6551Account(payable(addresses.accountImplL2));
-        contracts.rootTunnelImpl = ERC6551FxRootTunnel(addresses.rootTunnelImpl);
-        contracts.childTunnelImpl = ERC6551FxChildTunnel(addresses.childTunnelImpl);
+        contracts.rootTunnelImpl = RemoteCallFxRootTunnel(addresses.rootTunnelImpl);
+        contracts.childTunnelImpl = RemoteCallFxChildTunnel(addresses.childTunnelImpl);
     }
 }

@@ -1,4 +1,5 @@
 pragma solidity ^0.8.20;
+
 import { CommonBase } from "forge-std/Base.sol";
 
 contract BaseScript is CommonBase {

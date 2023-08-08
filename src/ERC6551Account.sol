@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 import { IERC6551Account } from "./interfaces/IERC6551Account.sol";
 import { IERC721 } from "./interfaces/IERC721.sol";
 import { LibERC6551 } from "./LibERC6551.sol";
+import { ITunnel } from "./interfaces/ITunnel.sol";
 
 contract ERC6551Account is IERC6551Account {
     error NotInited();
@@ -38,6 +39,11 @@ contract ERC6551Account is IERC6551Account {
             }
         }
         _nonce++;
+    }
+
+    function executeRemoteCall(address to, uint256 value, bytes calldata data) external onlyOwner onlyDelegateCall {
+        bytes memory cd = abi.encodeCall(this.executeCall, (to, value, data));
+        ITunnel(tunnel).executeRemoteCall(cd);
     }
 
     /**

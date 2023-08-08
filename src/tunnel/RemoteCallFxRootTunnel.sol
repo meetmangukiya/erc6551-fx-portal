@@ -1,9 +1,12 @@
 pragma solidity ^0.8.20;
 
 import { FxBaseRootTunnel, ICheckpointManager, IFxStateSender } from "fx-portal/tunnel/FxBaseRootTunnel.sol";
-import { ERC6551FxBase } from "./ERC6551FxBase.sol";
+import { Address } from "openzeppelin-contracts/contracts/utils/Address.sol";
+import { ITunnel } from "../interfaces/ITunnel.sol";
 
-contract ERC6551FxRootTunnel is FxBaseRootTunnel, ERC6551FxBase {
+contract RemoteCallFxRootTunnel is FxBaseRootTunnel {
+    using Address for address;
+
     constructor(address _checkpointManager, address _fxRoot) FxBaseRootTunnel(_checkpointManager, _fxRoot) { }
 
     function initialize(address _checkpointManager, address _fxRoot, address _fxChildTunnel) external {
@@ -15,16 +18,13 @@ contract ERC6551FxRootTunnel is FxBaseRootTunnel, ERC6551FxBase {
         fxChildTunnel = _fxChildTunnel;
     }
 
-    function executeRemoteCall(address account, address to, uint256 value, bytes memory data)
-        external
-        onlyAccountOwner(account, msg.sender)
-    {
-        bytes memory encodedParams = _encodeAccountParams(account);
-        bytes memory encodedRemoteCalldata = abi.encode(account, to, value, data, encodedParams);
-        _sendMessageToChild(encodedRemoteCalldata);
+    function executeRemoteCall(bytes memory data) external {
+        bytes memory message = abi.encode(msg.sender, data);
+        _sendMessageToChild(message);
     }
 
-    function _processMessageFromChild(bytes memory data) internal override {
-        _executeRemoteCall(data);
+    function _processMessageFromChild(bytes memory message) internal override {
+        (address target, bytes memory data) = abi.decode(message, (address, bytes));
+        target.functionCall(data);
     }
 }

@@ -1,4 +1,5 @@
 pragma solidity ^0.8.20;
+
 import { BaseScript } from "./BaseScript.sol";
 import { ERC6551Account } from "src/ERC6551Account.sol";
 import { BeaconProxy } from "openzeppelin-contracts/contracts/proxy/beacon/BeaconProxy.sol";

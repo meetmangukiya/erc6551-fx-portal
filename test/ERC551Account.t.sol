@@ -6,7 +6,6 @@ import { ERC6551Account } from "src/ERC6551Account.sol";
 import { BaseTest } from "./BaseTest.sol";
 import { ERC721 } from "solmate/tokens/ERC721.sol";
 import { BaseTest } from "./BaseTest.sol";
-import { ERC6551FxBase } from "src/tunnel/ERC6551FxBase.sol";
 import { Vm } from "forge-std/Vm.sol";
 import { LibERC6551 } from "src/LibERC6551.sol";
 
@@ -94,7 +93,7 @@ contract ERC6551AccountTest is BaseTest {
         vm.expectCall(target, value, data);
         account.executeCall(target, value, data);
 
-        // owner shouldn't be able to call
+        // other shouldn't be able to call
         address other = addr("other");
         vm.prank(other);
         vm.expectRevert(ERC6551Account.OnlyOwner.selector);
@@ -131,6 +130,11 @@ contract ERC6551AccountTest is BaseTest {
 
         vm.expectRevert(ERC6551Account.OnlyOwner.selector);
         account.executeCall(addr("target"), 0, hex"");
+
+        // call should pass from tunnel
+        vm.prank(fxTunnel);
+        vm.expectCall(addr("target"), 0, hex"");
+        account.executeCall(addr("target"), 0, hex"");
     }
 
     function testExecuteRemoteCallL1NativeToken() external {
@@ -154,11 +158,11 @@ contract ERC6551AccountTest is BaseTest {
 
         address other = addr("other");
         vm.prank(other);
-        vm.expectRevert(ERC6551FxBase.OnlyAccountOwner.selector);
-        contracts.rootTunnelProxy.executeRemoteCall(account_address, target, value, data);
+        vm.expectRevert(ERC6551Account.OnlyOwner.selector);
+        account.executeRemoteCall(target, value, data);
 
         vm.recordLogs();
-        contracts.rootTunnelProxy.executeRemoteCall(account_address, target, value, data);
+        account.executeRemoteCall(target, value, data);
         Vm.Log[] memory logs = vm.getRecordedLogs();
         assertEq(logs.length, 1, "should emit 1 log");
         bytes memory logData = logs[0].data;
@@ -167,12 +171,20 @@ contract ERC6551AccountTest is BaseTest {
 
         // switch to L2
         vm.selectFork(l2ForkId);
+        {
+            uint256 chainId_ = chainId;
+            uint256 tokenId_ = tokenId;
+            uint256 salt_ = salt;
+            address account_address_2 = ERC6551_REGISTRY.createAccount(
+                addresses.accountBeaconProxyMainnet, chainId_, address(token), tokenId_, salt_, hex""
+            );
+            assertEq(account_address_2, account_address, "account address should be the same on L2");
+        }
 
-        assertEq(address(account).code.length, 0, "account shouldnt exist on L2 yet");
-        vm.expectCall(target, value, hex"1234");
+        vm.expectCall(address(account), abi.encodeCall(ERC6551Account.executeCall, (target, value, data)));
+        vm.expectCall(target, value, data);
         vm.prank(FX_CHILD_POLYGON_POS);
         contracts.childTunnelProxy.processMessageFromRoot(0, addresses.rootTunnelProxy, messageData);
-        assertGt(address(account).code.length, 0, "account should be created if didnt exist");
 
         assertEq(account.owner(), addresses.childTunnelProxy, "account owner should be the tunnel on L2");
     }

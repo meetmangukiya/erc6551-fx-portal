@@ -6,17 +6,20 @@ import { ERC1967Factory } from "solady/utils/ERC1967Factory.sol";
 import { ERC1967FactoryConstants } from "solady/utils/ERC1967FactoryConstants.sol";
 import { RemoteCallFxChildTunnel } from "src/tunnel/RemoteCallFxChildTunnel.sol";
 import { RemoteCallFxRootTunnel } from "src/tunnel/RemoteCallFxRootTunnel.sol";
-import { ERC6551Account } from "src/ERC6551Account.sol";
 import { FX_ROOT_MAINNET, FX_CHILD_POLYGON_POS, CHECKPOINT_MANAGER } from "src/constants.sol";
 import { BeaconProxy } from "openzeppelin-contracts/contracts/proxy/beacon/BeaconProxy.sol";
 import { UpgradeableBeacon } from "openzeppelin-contracts/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { BaseScript } from "./BaseScript.sol";
 import { DeployAccountImplScript } from "./DeployAccountImpl.s.sol";
 import { console } from "forge-std/console.sol";
+import { AccountGuardian } from "tokenbound-contracts/src/AccountGuardian.sol";
+import { Account } from "tokenbound-contracts/src/Account.sol";
+import { CommonBase } from "forge-std/Base.sol";
+import { StdAssertions } from "forge-std/StdAssertions.sol";
 
 ERC1967Factory constant FACTORY = ERC1967Factory(ERC1967FactoryConstants.ADDRESS);
 
-contract DeployScript is Test, BaseScript {
+contract DeployScript is BaseScript, StdAssertions {
     uint256 mainnetForkId;
     uint256 l2ForkId;
 
@@ -31,19 +34,23 @@ contract DeployScript is Test, BaseScript {
         address accountImplL2;
         address rootTunnelImpl;
         address childTunnelImpl;
+        address guardianMainnet;
+        address guardianL2;
     }
 
     struct Contracts {
-        ERC6551Account accountBeaconProxyMainnet;
-        ERC6551Account accountBeaconProxyL2;
-        ERC6551Account accountMainnetProxy;
-        ERC6551Account accountL2Proxy;
+        Account accountBeaconProxyMainnet;
+        Account accountBeaconProxyL2;
+        Account accountMainnetProxy;
+        Account accountL2Proxy;
         RemoteCallFxRootTunnel rootTunnelProxy;
         RemoteCallFxChildTunnel childTunnelProxy;
-        ERC6551Account accountMainnetImpl;
-        ERC6551Account accountL2Impl;
+        Account accountMainnetImpl;
+        Account accountL2Impl;
         RemoteCallFxRootTunnel rootTunnelImpl;
         RemoteCallFxChildTunnel childTunnelImpl;
+        AccountGuardian guardianMainnet;
+        AccountGuardian guardianL2;
     }
 
     Addresses addresses;
@@ -94,8 +101,12 @@ contract DeployScript is Test, BaseScript {
         );
         assertEq(addresses.rootTunnelProxy, rootTunnelAddress, "root tunnel address not as expected");
 
-        (addresses.accountImplMainnet, addresses.accountProxyMainnet, addresses.accountBeaconProxyMainnet) =
-            new DeployAccountImplScript(broadcast, sender).deploy(addresses.rootTunnelProxy);
+        (
+            addresses.guardianMainnet,
+            addresses.accountImplMainnet,
+            addresses.accountProxyMainnet,
+            addresses.accountBeaconProxyMainnet
+        ) = new DeployAccountImplScript(broadcast, sender).deploy(addresses.rootTunnelProxy);
 
         // deploy child tunnel and account implementation on l2
         vm.selectFork(l2ForkId);
@@ -116,7 +127,7 @@ contract DeployScript is Test, BaseScript {
         assertEq(addresses.childTunnelProxy, childTunnelAddress, "child tunnel address not as expected");
 
         // deploy account implementation
-        (addresses.accountImplL2, addresses.accountProxyL2, addresses.accountBeaconProxyL2) =
+        (addresses.guardianL2, addresses.accountImplL2, addresses.accountProxyL2, addresses.accountBeaconProxyL2) =
             new DeployAccountImplScript(broadcast, sender).deploy(addresses.childTunnelProxy);
         assertEq(
             addresses.accountProxyL2,
@@ -144,16 +155,18 @@ contract DeployScript is Test, BaseScript {
     }
 
     function _syncContracts() internal {
-        contracts.accountBeaconProxyMainnet = ERC6551Account(payable(addresses.accountBeaconProxyMainnet));
-        contracts.accountBeaconProxyL2 = ERC6551Account(payable(addresses.accountBeaconProxyL2));
-        contracts.accountMainnetProxy = ERC6551Account(payable(addresses.accountProxyMainnet));
-        contracts.accountL2Proxy = ERC6551Account(payable(addresses.accountProxyL2));
+        contracts.accountBeaconProxyMainnet = Account(payable(addresses.accountBeaconProxyMainnet));
+        contracts.accountBeaconProxyL2 = Account(payable(addresses.accountBeaconProxyL2));
+        contracts.accountMainnetProxy = Account(payable(addresses.accountProxyMainnet));
+        contracts.accountL2Proxy = Account(payable(addresses.accountProxyL2));
         contracts.rootTunnelProxy = RemoteCallFxRootTunnel(addresses.rootTunnelProxy);
         contracts.childTunnelProxy = RemoteCallFxChildTunnel(addresses.childTunnelProxy);
 
-        contracts.accountMainnetImpl = ERC6551Account(payable(addresses.accountImplMainnet));
-        contracts.accountL2Impl = ERC6551Account(payable(addresses.accountImplL2));
+        contracts.accountMainnetImpl = Account(payable(addresses.accountImplMainnet));
+        contracts.accountL2Impl = Account(payable(addresses.accountImplL2));
         contracts.rootTunnelImpl = RemoteCallFxRootTunnel(addresses.rootTunnelImpl);
         contracts.childTunnelImpl = RemoteCallFxChildTunnel(addresses.childTunnelImpl);
+        contracts.guardianMainnet = AccountGuardian(addresses.guardianMainnet);
+        contracts.guardianL2 = AccountGuardian(addresses.guardianL2);
     }
 }

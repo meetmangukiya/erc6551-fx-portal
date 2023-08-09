@@ -15,4 +15,4 @@
 	url = https://github.com/openzeppelin/openzeppelin-contracts
 [submodule "lib/tokenbound-contracts"]
 	path = lib/tokenbound-contracts
-	url = https://github.com/tokenbound/contracts
+	url = https://github.com/meetmangukiya/tokenbound-contracts
